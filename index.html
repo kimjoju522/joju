@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무드 향수 추천</title>
+<style>
+  :root {
+    --bg: #faf6f1;
+    --fg: #2b2420;
+    --muted: #8a7d72;
+    --card: #fff;
+    --accent: #a8643c;
+    --border: #e8dfd5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1815;
+      --fg: #f1e9e0;
+      --muted: #a39587;
+      --card: #272220;
+      --accent: #d99a6c;
+      --border: #3a332e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    line-height: 1.6;
+  }
+  main { max-width: 640px; margin: 0 auto; padding: 56px 16px 80px; }
+  h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  form { display: flex; gap: 8px; }
+  input {
+    flex: 1; min-width: 0;
+    padding: 14px 16px; font-size: 16px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--card); color: var(--fg);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    padding: 0 20px; font-size: 16px; cursor: pointer;
+    border: 0; border-radius: 10px;
+    background: var(--accent); color: #fff;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 32px; }
+  .chip {
+    padding: 6px 12px; font-size: 14px;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 999px;
+  }
+  .chip:hover { color: var(--accent); border-color: var(--accent); }
+  .note { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; margin-bottom: 12px;
+  }
+  .brand { color: var(--muted); font-size: 13px; margin: 0; }
+  .name { font-size: 18px; font-weight: 600; margin: 2px 0 8px; }
+  .notes { color: var(--accent); font-size: 14px; margin: 0 0 8px; }
+  .desc { margin: 0; font-size: 15px; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 40px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>오늘의 무드, 향으로</h1>
+  <p class="sub">원하는 분위기를 적으면 어울리는 향수를 골라 드려요.</p>
+
+  <form id="form">
+    <input id="mood" type="text" placeholder="예: 비 오는 날 차분한 느낌" autocomplete="off" aria-label="원하는 분위기">
+    <button type="submit">추천</button>
+  </form>
+
+  <div class="chips" id="chips"></div>
+  <div id="result" aria-live="polite"></div>
+
+  <footer>연습용 데모입니다. 추천은 키워드 매칭으로 이뤄져요.</footer>
+</main>
+
+<script>
+const PERFUMES = [
+  { brand: "Chanel", name: "N°5", notes: "알데하이드 · 일랑일랑 · 샌달우드",
+    desc: "시대를 초월한 파우더리 플로럴. 우아하고 고급스러운 날에.",
+    tags: ["우아", "고급", "클래식", "파우더", "포멀", "격식", "여성스러", "플로럴", "꽃"] },
+  { brand: "Jo Malone", name: "Wood Sage & Sea Salt", notes: "씨솔트 · 세이지 · 앰브렛",
+    desc: "바닷바람이 부는 해변 산책 같은 맑고 미네랄한 향.",
+    tags: ["바다", "해변", "시원", "청량", "여름", "상쾌", "산책", "자연", "휴가"] },
+  { brand: "Le Labo", name: "Santal 33", notes: "샌달우드 · 시더 · 가죽",
+    desc: "도회적이고 스모키한 우디. 개성 있고 자유로운 분위기.",
+    tags: ["우디", "나무", "도시", "시크", "개성", "자유", "무게", "깊은", "세련"] },
+  { brand: "Maison Margiela", name: "Replica By the Fireplace", notes: "밤 · 정향 · 바닐라",
+    desc: "벽난로 앞에서 보내는 겨울밤처럼 따뜻하고 포근한 향.",
+    tags: ["겨울", "따뜻", "포근", "벽난로", "아늑", "크리스마스", "밤", "스모키", "추운"] },
+  { brand: "Maison Margiela", name: "Lazy Sunday Morning", notes: "백합 · 아이리스 · 머스크",
+    desc: "갓 세탁한 하얀 시트 같은 깨끗하고 나른한 향.",
+    tags: ["아침", "깨끗", "비누", "포근", "나른", "주말", "여유", "순수", "시트", "편안"] },
+  { brand: "Diptyque", name: "Do Son", notes: "튜베로즈 · 오렌지 블러섬 · 아이리스",
+    desc: "비 온 뒤 정원처럼 촉촉하고 부드러운 화이트 플로럴.",
+    tags: ["비", "촉촉", "차분", "정원", "부드러", "봄", "고요", "평온", "꽃", "우아"] },
+  { brand: "Dior", name: "Sauvage", notes: "베르가못 · 페퍼 · 앰브록산",
+    desc: "신선하고 스파이시한 첫인상. 자신감 있는 데일리 향.",
+    tags: ["남성", "자신감", "상쾌", "스파이시", "데일리", "활기", "신선", "당당", "시원"] },
+  { brand: "Byredo", name: "Gypsy Water", notes: "주니퍼 · 소나무 · 바닐라",
+    desc: "숲속 캠프파이어를 떠올리게 하는 자유롭고 몽환적인 향.",
+    tags: ["숲", "자유", "여행", "몽환", "자연", "캠핑", "나무", "모험", "가을"] },
+  { brand: "Tom Ford", name: "Black Orchid", notes: "블랙트러플 · 오키드 · 패출리",
+    desc: "어둡고 관능적인 오리엔탈. 밤의 파티에 어울려요.",
+    tags: ["관능", "섹시", "파티", "밤", "진한", "강렬", "신비", "어두운", "무거운"] },
+  { brand: "Jo Malone", name: "English Pear & Freesia", notes: "배 · 프리지아 · 패출리",
+    desc: "달콤하고 싱그러운 과일 향. 가볍고 사랑스러운 기분에.",
+    tags: ["과일", "달콤", "사랑", "싱그", "가벼운", "귀여", "설렘", "연애", "봄", "데이트"] },
+  { brand: "Hermès", name: "Un Jardin sur le Nil", notes: "그린망고 · 연꽃 · 시트러스",
+    desc: "강가 정원의 초록빛 과즙. 산뜻하고 투명한 여름 향.",
+    tags: ["여름", "초록", "풀", "산뜻", "투명", "시원", "과일", "청량", "정원"] },
+  { brand: "Creed", name: "Aventus", notes: "파인애플 · 자작나무 · 머스크",
+    desc: "성공한 사람의 자신감. 프루티하면서 스모키한 시그니처.",
+    tags: ["성공", "자신감", "비즈니스", "면접", "당당", "남성", "카리스마", "리더", "스모키"] },
+];
+
+const SUGGESTIONS = ["비 오는 날 차분한 느낌", "여름 바다 청량함", "따뜻하고 포근한 겨울밤", "자신감 있는 출근길", "설레는 데이트"];
+
+const $ = (id) => document.getElementById(id);
+
+function score(p, text) {
+  return p.tags.reduce((s, tag) => s + (text.includes(tag) ? 1 : 0), 0);
+}
+
+function render(mood) {
+  const text = mood.trim();
+  const out = $("result");
+  if (!text) { out.innerHTML = ""; return; }
+
+  const ranked = PERFUMES
+    .map((p) => ({ p, s: score(p, text) }))
+    .sort((a, b) => b.s - a.s);
+
+  const hits = ranked.filter((r) => r.s > 0).slice(0, 3);
+  const picks = hits.length ? hits : ranked.sort(() => Math.random() - 0.5).slice(0, 3);
+  const note = hits.length
+    ? `"${text}"에 어울리는 향수예요.`
+    : `딱 맞는 키워드를 못 찾았어요. 대신 이런 향은 어떨까요?`;
+
+  out.innerHTML =
+    `<p class="note"></p>` +
+    picks.map(({ p }) => `
+      <div class="card">
+        <p class="brand"></p>
+        <p class="name"></p>
+        <p class="notes"></p>
+        <p class="desc"></p>
+      </div>`).join("");
+
+  // textContent로 채워서 입력값이 HTML로 해석되지 않게 한다
+  out.querySelector(".note").textContent = note;
+  out.querySelectorAll(".card").forEach((el, i) => {
+    const { p } = picks[i];
+    el.querySelector(".brand").textContent = p.brand;
+    el.querySelector(".name").textContent = p.name;
+    el.querySelector(".notes").textContent = p.notes;
+    el.querySelector(".desc").textContent = p.desc;
+  });
+}
+
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  render($("mood").value);
+});
+
+SUGGESTIONS.forEach((s) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "chip";
+  b.textContent = s;
+  b.addEventListener("click", () => { $("mood").value = s; render(s); });
+  $("chips").appendChild(b);
+});
+</script>
+</body>
+</html>
