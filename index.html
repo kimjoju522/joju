@@ -63,6 +63,15 @@
   .name { font-size: 18px; font-weight: 600; margin: 2px 0 8px; }
   .notes { color: var(--accent); font-size: 14px; margin: 0 0 8px; }
   .desc { margin: 0; font-size: 15px; }
+  .card { cursor: pointer; }
+  .card:hover { border-color: var(--accent); }
+  .detail { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .card.open .detail { display: flex; gap: 16px; align-items: center; }
+  .detail img { width: 96px; height: 96px; object-fit: contain; border-radius: 8px; background: #fff; flex: none; }
+  .price { font-size: 20px; font-weight: 600; margin: 0; }
+  .mall { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
+  .detail a { color: var(--accent); font-size: 14px; }
+  .loading { color: var(--muted); font-size: 14px; }
   footer { color: var(--muted); font-size: 13px; margin-top: 40px; }
 </style>
 </head>
@@ -153,6 +162,7 @@ function render(mood) {
         <p class="name"></p>
         <p class="notes"></p>
         <p class="desc"></p>
+        <div class="detail"></div>
       </div>`).join("");
 
   // textContent로 채워서 입력값이 HTML로 해석되지 않게 한다
@@ -163,22 +173,46 @@ function render(mood) {
     el.querySelector(".name").textContent = p.name;
     el.querySelector(".notes").textContent = p.notes;
     el.querySelector(".desc").textContent = p.desc;
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      el.classList.toggle("open");
+      if (el.classList.contains("open")) loadPrice(p, el.querySelector(".detail"));
+    });
   });
 }
 
-$("form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  render($("mood").value);
-});
+// 연습용 예시 데이터. 가격은 대략적인 참고값이고, 이미지는 병 모양 일러스트예요.
+// 실제 상품 이미지를 쓰려면 아래 img에 이미지 주소를 넣으면 돼요.
+const SAMPLE = {
+  "N°5":                     { price: 160000, color: "#e9d8b4" },
+  "Wood Sage & Sea Salt":    { price: 175000, color: "#b7d3d6" },
+  "Santal 33":               { price: 330000, color: "#c8a77f" },
+  "Replica By the Fireplace":{ price: 190000, color: "#c97b4a" },
+  "Lazy Sunday Morning":     { price: 190000, color: "#e8e4dc" },
+  "Do Son":                  { price: 200000, color: "#f0dede" },
+  "Sauvage":                 { price: 140000, color: "#5b7aa6" },
+  "Gypsy Water":             { price: 290000, color: "#8fa68a" },
+  "Black Orchid":            { price: 190000, color: "#3a2b3d" },
+  "English Pear & Freesia":  { price: 175000, color: "#d9e0a3" },
+  "Un Jardin sur le Nil":    { price: 130000, color: "#a9d49a" },
+  "Aventus":                 { price: 450000, color: "#9aa0a6" },
+};
 
-SUGGESTIONS.forEach((s) => {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.className = "chip";
-  b.textContent = s;
-  b.addEventListener("click", () => { $("mood").value = s; render(s); });
-  $("chips").appendChild(b);
-});
+function bottleSvg(color) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="#faf6f1"/><rect x="40" y="10" width="16" height="10" rx="2" fill="#6b5d52"/><rect x="44" y="20" width="8" height="8" fill="#6b5d52"/><rect x="26" y="28" width="44" height="58" rx="8" fill="${color}" stroke="#6b5d52" stroke-width="2"/><rect x="34" y="42" width="28" height="22" rx="2" fill="#fff" opacity=".6"/></svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
+function loadPrice(p, box) {
+  if (box.dataset.loaded) return;
+  const d = SAMPLE[p.name];
+  const q = encodeURIComponent(`${p.brand} ${p.name} 향수`);
+  box.innerHTML = `<img alt=""><div><p class="price"></p><p class="mall">참고가 (예시 · 실제 최저가는 쇼핑몰에서 확인)</p><a target="_blank" rel="noopener noreferrer">네이버쇼핑 최저가 보기</a></div>`;
+  box.querySelector("img").src = d.img || bottleSvg(d.color);
+  box.querySelector(".price").textContent = d.price.toLocaleString("ko-KR") + "원~";
+  box.querySelector("a").href = `https://search.shopping.naver.com/search/all?query=${q}&sort=price_asc`;
+  box.dataset.loaded = "1";
+}
 </script>
 </body>
 </html>
