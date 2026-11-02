@@ -213,6 +213,20 @@ function loadPrice(p, box) {
   box.querySelector("a").href = `https://search.shopping.naver.com/search/all?query=${q}&sort=price_asc`;
   box.dataset.loaded = "1";
 }
+
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  render($("mood").value);
+});
+
+SUGGESTIONS.forEach((s) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "chip";
+  b.textContent = s;
+  b.addEventListener("click", () => { $("mood").value = s; render(s); });
+  $("chips").appendChild(b);
+});
 </script>
 </body>
 </html>
